@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "POST") {
-      const { memberName, referralType, targetCategory, description, deadline } = req.body;
+      const { memberName, referralType, targetCategory, description } = req.body;
 
       if (!memberName || !referralType || !description) {
         return res.status(400).json({ error: "缺少必填欄位" });
@@ -27,7 +27,6 @@ export default async function handler(req, res) {
         referralType,
         targetCategory: targetCategory  || "",
         description,
-        deadline:       deadline        || "",
         date: new Date().toLocaleDateString("zh-HK", {
           year: "numeric", month: "2-digit", day: "2-digit",
         }),

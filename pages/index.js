@@ -19,6 +19,7 @@ export default function Home() {
 
   const [filterCat, setFilterCat]   = useState("全部");
   const [filterType, setFilterType] = useState("全部");
+  const [hotOnly, setHotOnly]       = useState(false);
   const [searchText, setSearchText] = useState("");
   const [sortField, setSortField]   = useState("date");
 
@@ -76,13 +77,25 @@ export default function Home() {
     window.open("/api/export", "_blank");
   }
 
+  // Count how many distinct members are targeting each industry category
+  const targetCategoryCounts = referrals.reduce((acc, r) => {
+    if (!r.targetCategory) return acc;
+    if (!acc[r.targetCategory]) acc[r.targetCategory] = new Set();
+    acc[r.targetCategory].add(r.memberName);
+    return acc;
+  }, {});
+  const hotCategories = Object.entries(targetCategoryCounts)
+    .filter(([, members]) => members.size >= 2)
+    .map(([cat]) => cat);
+
   const filtered = referrals
     .filter((r) => {
       const matchCat  = filterCat  === "全部" || r.category    === filterCat;
       const matchType = filterType === "全部" || r.referralType === filterType;
+      const matchHot  = !hotOnly || hotCategories.includes(r.targetCategory);
       const matchSearch = !searchText ||
         [r.memberName, r.role, r.company, r.description].some((f) => f && f.includes(searchText));
-      return matchCat && matchType && matchSearch;
+      return matchCat && matchType && matchHot && matchSearch;
     })
     .sort((a, b) =>
       sortField === "date"
@@ -95,6 +108,24 @@ export default function Home() {
     border: `1.5px solid ${err ? "#c8102e" : "#dde3ee"}`,
     borderRadius: 9, fontSize: 14, background: "#f8fafd", color: err ? undefined : undefined,
   });
+
+  // Fun stat for homepage — find the busiest category by referral count (loaded lazily)
+  const [homeStats, setHomeStats] = useState({ total: 0, hotCategory: "" });
+  useEffect(() => {
+    fetch("/api/referrals")
+      .then((r) => r.json())
+      .then((d) => {
+        const refs = d.referrals || [];
+        const counts = {};
+        refs.forEach((r) => { if (r.category) counts[r.category] = (counts[r.category] || 0) + 1; });
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        setHomeStats({
+          total: refs.length,
+          hotCategory: top ? `${top[0]}. ${CATEGORY_LABELS[top[0]]}` : "",
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   // ── HOME ──
   if (view === "home") return (
@@ -122,23 +153,45 @@ export default function Home() {
             <div style={{ color: "#fff", fontWeight: 900, fontSize: "clamp(40px, 8vw, 80px)", lineHeight: 1, letterSpacing: -1, marginBottom: 8 }}>NEXUS</div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontWeight: 300, fontSize: "clamp(18px, 3vw, 28px)", letterSpacing: 8, marginBottom: 12 }}>引薦平台</div>
             <div style={{ width: 60, height: 3, background: "#c8102e", marginBottom: 28, borderRadius: 2 }} />
-            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 2, marginBottom: 48, maxWidth: 400 }}>
-              互助引薦，共創商機<br />BNI Nexus 會友專用引薦登記及查閱系統
+            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, lineHeight: 1.9, marginBottom: 10, maxWidth: 440, fontWeight: 600 }}>
+              全城最靠譜的「欠人情」登記處 🤝
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, lineHeight: 2, marginBottom: 40, maxWidth: 420 }}>
+              你缺客戶、缺供應商、缺一個懂你的會計師——<br />
+              在這裡講一聲，總有人「啱啱識條女」。<br />
+              BNI Nexus 會友專用引薦登記及查閱系統。
             </div>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <button onClick={() => { setSubmitted(false); setView("form"); }}
-                style={{ background: "#c8102e", border: "none", borderRadius: 12, padding: "20px 32px", textAlign: "left", minWidth: 200 }}>
+                style={{ background: "#c8102e", border: "none", borderRadius: 12, padding: "20px 32px", textAlign: "left", minWidth: 220, transition: "transform 0.18s ease, box-shadow 0.18s ease", boxShadow: "0 4px 14px rgba(200,16,46,0.25)" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px) rotate(-0.5deg)"; e.currentTarget.style.boxShadow = "0 10px 26px rgba(200,16,46,0.4)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 14px rgba(200,16,46,0.25)"; }}>
                 <div style={{ color: "#fff", fontWeight: 900, fontSize: 18, marginBottom: 6 }}>登記引薦需求</div>
-                <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 13 }}>填寫您需要的引薦 →</div>
+                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>講出你的「想搵邊個」→</div>
               </button>
               <button onClick={() => setView("board")}
-                style={{ background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "20px 32px", textAlign: "left", minWidth: 200 }}>
+                style={{ background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "20px 32px", textAlign: "left", minWidth: 220, transition: "transform 0.18s ease, background 0.18s ease" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px) rotate(0.5deg)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}>
                 <div style={{ color: "#fff", fontWeight: 900, fontSize: 18, marginBottom: 6 }}>瀏覽公告欄</div>
-                <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 13 }}>查看所有引薦需求 →</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>睇下邊行邊業最渴市 →</div>
               </button>
             </div>
+
+            {homeStats.total > 0 && (
+              <div style={{ marginTop: 36, display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 30, padding: "8px 18px", maxWidth: "fit-content" }}>
+                <span style={{ fontSize: 16 }}>🔥</span>
+                <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12.5 }}>
+                  全場已有 <b style={{ color: "#fff" }}>{homeStats.total}</b> 則需求在等緣分
+                  {homeStats.hotCategory && <> · 最缺人脈的行業：<b style={{ color: "#e8c547" }}>{homeStats.hotCategory}</b></>}
+                </span>
+              </div>
+            )}
           </div>
-          <div style={{ padding: "16px 40px 32px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ padding: "0 40px 8px" }}>
+            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, letterSpacing: 1 }}>十個行業，一條心 ——</span>
+          </div>
+          <div style={{ padding: "0 40px 32px", display: "flex", gap: 8, flexWrap: "wrap" }}>
             {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
               <div key={k} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: CATEGORY_COLORS[k] }} />
@@ -285,6 +338,12 @@ export default function Home() {
               <div style={{ color: "#c8102e", fontWeight: 900, fontSize: 22 }}>{referrals.length}</div>
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2 }}>總需求</div>
             </div>
+            {hotCategories.length > 0 && (
+              <div style={{ textAlign: "center", flexShrink: 0 }}>
+                <div style={{ color: "#ffb454", fontWeight: 900, fontSize: 22 }}>🔥 {hotCategories.length}</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2, whiteSpace: "nowrap" }}>熱門共同目標</div>
+              </div>
+            )}
             {REFERRAL_TYPES.slice(0, 5).map(t => (
               <div key={t} style={{ textAlign: "center", flexShrink: 0 }}>
                 <div style={{ color: "#fff", fontWeight: 800, fontSize: 18 }}>{referrals.filter(r => r.referralType === t).length}</div>
@@ -314,6 +373,18 @@ export default function Home() {
               <option value="date">最新優先</option>
               <option value="name">姓名排序</option>
             </select>
+            {hotCategories.length > 0 && (
+              <button onClick={() => setHotOnly(h => !h)}
+                style={{
+                  padding: "8px 14px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                  border: hotOnly ? "1.5px solid #c8102e" : "1.5px solid #ffd9a0",
+                  background: hotOnly ? "#c8102e" : "#fff7eb",
+                  color: hotOnly ? "#fff" : "#b9690a",
+                  whiteSpace: "nowrap",
+                }}>
+                🔥 只看熱門共同目標{hotOnly ? "（已開啟）" : ""}
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -332,10 +403,18 @@ export default function Home() {
               {filtered.map(r => {
                 const catColor  = CATEGORY_COLORS[r.category]    || "#555";
                 const typeColor = TYPE_COLORS[r.referralType]     || "#333";
+                const isHot = r.targetCategory && hotCategories.includes(r.targetCategory);
+                const hotCount = isHot ? targetCategoryCounts[r.targetCategory].size : 0;
                 return (
-                  <div key={r.id} style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: "1px solid #eaeef4", transition: "transform 0.15s, box-shadow 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(0,0,0,0.11)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"; }}>
+                  <div key={r.id} style={{ background: "#fff", borderRadius: 14, boxShadow: isHot ? "0 2px 14px rgba(255,140,0,0.18)" : "0 2px 12px rgba(0,0,0,0.06)", border: isHot ? "1.5px solid #ffd9a0" : "1px solid #eaeef4", transition: "transform 0.15s, box-shadow 0.15s", position: "relative" }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = isHot ? "0 10px 28px rgba(255,140,0,0.28)" : "0 8px 28px rgba(0,0,0,0.11)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = isHot ? "0 2px 14px rgba(255,140,0,0.18)" : "0 2px 12px rgba(0,0,0,0.06)"; }}>
+                    {isHot && (
+                      <div style={{ position: "absolute", top: 10, right: -32, background: "linear-gradient(135deg, #ff9a3c, #ff6b35)", color: "#fff", fontSize: 10.5, fontWeight: 900, padding: "3px 36px", transform: "rotate(40deg)", boxShadow: "0 2px 6px rgba(255,107,53,0.4)", letterSpacing: 0.5, zIndex: 2 }}>
+                        🔥 熱門
+                      </div>
+                    )}
+                    <div style={{ borderRadius: 14, overflow: "hidden" }}>
                     <div style={{ background: catColor, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 40, height: 40, borderRadius: 9, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 13, flexShrink: 0 }}>
                         {r.memberId || r.category}
@@ -353,9 +432,10 @@ export default function Home() {
                         {r.referralType}
                       </div>
                       {r.targetCategory && (
-                        <div style={{ fontSize: 12, color: "#666", marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                        <div style={{ fontSize: 12, color: isHot ? "#b9690a" : "#666", marginBottom: 8, display: "flex", alignItems: "center", gap: 5, fontWeight: isHot ? 700 : 400 }}>
                           <span style={{ width: 6, height: 6, borderRadius: 2, background: CATEGORY_COLORS[r.targetCategory], display: "inline-block", flexShrink: 0 }} />
-                          <span><b style={{ color: "#444" }}>目標：</b>{r.targetCategory}. {CATEGORY_LABELS[r.targetCategory]}</span>
+                          <span><b style={{ color: isHot ? "#b9690a" : "#444" }}>目標：</b>{r.targetCategory}. {CATEGORY_LABELS[r.targetCategory]}</span>
+                          {isHot && <span style={{ background: "#fff0db", borderRadius: 10, padding: "1px 8px", fontSize: 10.5, marginLeft: 2 }}>👥 {hotCount} 位會友也在找</span>}
                         </div>
                       )}
                       <div style={{ fontSize: 13, color: "#333", lineHeight: 1.75, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -364,6 +444,7 @@ export default function Home() {
                       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", paddingTop: 10, borderTop: "1px solid #f0f4f8", gap: 8, flexWrap: "wrap" }}>
                         <div style={{ fontSize: 11, color: "#bbb" }}>{r.date}</div>
                       </div>
+                    </div>
                     </div>
                   </div>
                 );

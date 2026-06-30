@@ -1,0 +1,4 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, sans-serif; background: #f4f6fa; }
+button { cursor: pointer; font-family: inherit; }
+select, input, textarea { font-family: inherit; }

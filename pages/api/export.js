@@ -11,16 +11,16 @@ export default async function handler(req, res) {
     const dateStr = new Date().toLocaleDateString("zh-HK").replace(/\//g, "-");
 
     // Sheet 1: 所有引薦需求
-    const s1Headers = ["編號","姓名","職業","公司","行業類別","引薦類型","目標行業","詳細說明","截止日期","登記日期"];
+    const s1Headers = ["編號","姓名","職業","公司","行業類別","引薦類型","目標行業","詳細說明","登記日期"];
     const s1Rows = referrals.map(r => [
       r.memberId, r.memberName, r.role, r.company,
       r.category ? `${r.category}. ${CATEGORY_LABELS[r.category]||""}` : "-",
       r.referralType,
       r.targetCategory ? `${r.targetCategory}. ${CATEGORY_LABELS[r.targetCategory]||""}` : "-",
-      r.description, r.deadline||"-", r.date,
+      r.description, r.date,
     ]);
     const ws1 = XLSX.utils.aoa_to_sheet([s1Headers, ...s1Rows]);
-    ws1["!cols"] = [8,14,14,22,16,20,16,42,12,12].map(w=>({wch:w}));
+    ws1["!cols"] = [8,14,14,22,16,20,16,42,12].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, "所有引薦需求");
 
     // Sheet 2: 按行業分類

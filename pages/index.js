@@ -13,7 +13,7 @@ export default function Home() {
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
-    memberName: "", referralType: "", targetCategory: "", description: "", deadline: "",
+    memberName: "", referralType: "", targetCategory: "", description: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -64,7 +64,7 @@ export default function Home() {
       });
       if (!res.ok) throw new Error();
       setSubmitted(true);
-      setForm({ memberName: "", referralType: "", targetCategory: "", description: "", deadline: "" });
+      setForm({ memberName: "", referralType: "", targetCategory: "", description: "" });
       setErrors({});
     } catch {
       setError("提交失敗，請稍後再試。");
@@ -246,12 +246,6 @@ export default function Home() {
                   {errors.description && <div style={{ color: "#c8102e", fontSize: 12, marginTop: 5 }}>{errors.description}</div>}
                 </div>
 
-                <div style={{ marginBottom: 28 }}>
-                  <label style={{ display: "block", fontWeight: 700, color: "#222", marginBottom: 7, fontSize: 14 }}>截止日期（如適用）</label>
-                  <input type="date" value={form.deadline} style={selStyle(false)}
-                    onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
-                </div>
-
                 <button onClick={handleSubmit} disabled={submitting}
                   style={{ width: "100%", padding: "15px", background: submitting ? "#999" : "#c8102e", border: "none", borderRadius: 11, color: "#fff", fontWeight: 900, fontSize: 16, letterSpacing: 1.5, boxShadow: "0 4px 20px rgba(200,16,46,0.35)" }}>
                   {submitting ? "提交中..." : "提交引薦需求 →"}
@@ -368,7 +362,6 @@ export default function Home() {
                         {r.description}
                       </div>
                       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", paddingTop: 10, borderTop: "1px solid #f0f4f8", gap: 8, flexWrap: "wrap" }}>
-                        {r.deadline && <div style={{ fontSize: 11, color: "#c8102e", fontWeight: 700, background: "#fff0f2", borderRadius: 4, padding: "2px 7px" }}>截止 {r.deadline}</div>}
                         <div style={{ fontSize: 11, color: "#bbb" }}>{r.date}</div>
                       </div>
                     </div>

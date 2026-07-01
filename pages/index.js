@@ -109,95 +109,132 @@ export default function Home() {
     borderRadius: 9, fontSize: 14, background: "#f8fafd", color: err ? undefined : undefined,
   });
 
-  // Fun stat for homepage — find the busiest category by referral count (loaded lazily)
-  const [homeStats, setHomeStats] = useState({ total: 0, hotCategory: "" });
+  // ── HOME ──
+  const [homeTotal, setHomeTotal] = useState(null);
   useEffect(() => {
-    fetch("/api/referrals")
-      .then((r) => r.json())
-      .then((d) => {
-        const refs = d.referrals || [];
-        const counts = {};
-        refs.forEach((r) => { if (r.category) counts[r.category] = (counts[r.category] || 0) + 1; });
-        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-        setHomeStats({
-          total: refs.length,
-          hotCategory: top ? `${top[0]}. ${CATEGORY_LABELS[top[0]]}` : "",
-        });
-      })
-      .catch(() => {});
+    fetch("/api/referrals").then(r => r.json()).then(d => setHomeTotal((d.referrals||[]).length)).catch(()=>{});
   }, []);
 
-  // ── HOME ──
   if (view === "home") return (
     <>
       <Head>
         <title>BNI Nexus 引薦平台</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet" />
+        <style>{`
+          @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+          @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+          @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+          .home-btn { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
+          .home-btn:hover { transform: translateY(-4px) !important; }
+          .cat-card { transition: transform 0.2s ease, background 0.2s ease !important; cursor: default; }
+          .cat-card:hover { transform: scale(1.06) !important; }
+        `}</style>
       </Head>
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, right: 0, width: "45%", height: "100%", background: "linear-gradient(135deg, transparent 30%, #c8102e 30%)", zIndex: 0 }} />
-        <div style={{ position: "absolute", top: 0, right: 0, width: "43%", height: "100%", background: "linear-gradient(135deg, transparent 30%, #a00c24 30%)", zIndex: 0, opacity: 0.5 }} />
+      <div style={{ minHeight: "100vh", background: "#080808", position: "relative", overflow: "hidden", fontFamily: "'Noto Sans TC','PingFang TC',sans-serif" }}>
+
+        {/* Background glows */}
+        <div style={{ position: "absolute", top: "-10%", left: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,16,46,0.18) 0%, transparent 70%)", zIndex: 0 }} />
+        <div style={{ position: "absolute", bottom: "0%", right: "30%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,16,46,0.1) 0%, transparent 70%)", zIndex: 0 }} />
+
+        {/* Grid lines background */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "60px 60px", zIndex: 0 }} />
+
         <div style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "20px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
+          {/* Nav */}
+          <div style={{ padding: "22px 48px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 44, height: 44, background: "#c8102e", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 16, border: "2px solid rgba(255,255,255,0.2)" }}>BNI</div>
+              <div style={{ width: 40, height: 40, background: "#c8102e", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 14, letterSpacing: 0.5 }}>BNI</div>
               <div>
-                <div style={{ color: "#fff", fontWeight: 900, fontSize: 15, letterSpacing: 3 }}>NEXUS CHAPTER</div>
-                <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, letterSpacing: 2 }}>十大行業聯盟</div>
+                <div style={{ color: "#fff", fontWeight: 900, fontSize: 14, letterSpacing: 3 }}>NEXUS CHAPTER</div>
+                <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, letterSpacing: 2 }}>十大行業聯盟</div>
               </div>
             </div>
-          </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 40px 60px" }}>
-            <div style={{ color: "#c8102e", fontWeight: 900, fontSize: 13, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase" }}>Member Referral Platform</div>
-            <div style={{ color: "#fff", fontWeight: 900, fontSize: "clamp(40px, 8vw, 80px)", lineHeight: 1, letterSpacing: -1, marginBottom: 8 }}>NEXUS</div>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontWeight: 300, fontSize: "clamp(18px, 3vw, 28px)", letterSpacing: 8, marginBottom: 12 }}>引薦平台</div>
-            <div style={{ width: 60, height: 3, background: "#c8102e", marginBottom: 28, borderRadius: 2 }} />
-            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, lineHeight: 1.9, marginBottom: 10, maxWidth: 440, fontWeight: 600 }}>
-              全城最靠譜的「欠人情」登記處 🤝
-            </div>
-            <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, lineHeight: 2, marginBottom: 40, maxWidth: 420 }}>
-              你缺客戶、缺供應商、缺一個懂你的會計師——<br />
-              在這裡講一聲，總有人「啱啱識條女」。<br />
-              BNI Nexus 會友專用引薦登記及查閱系統。
-            </div>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <button onClick={() => { setSubmitted(false); setView("form"); }}
-                style={{ background: "#c8102e", border: "none", borderRadius: 12, padding: "20px 32px", textAlign: "left", minWidth: 220, transition: "transform 0.18s ease, box-shadow 0.18s ease", boxShadow: "0 4px 14px rgba(200,16,46,0.25)" }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px) rotate(-0.5deg)"; e.currentTarget.style.boxShadow = "0 10px 26px rgba(200,16,46,0.4)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 14px rgba(200,16,46,0.25)"; }}>
-                <div style={{ color: "#fff", fontWeight: 900, fontSize: 18, marginBottom: 6 }}>登記引薦需求</div>
-                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>講出你的「想搵邊個」→</div>
-              </button>
-              <button onClick={() => setView("board")}
-                style={{ background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "20px 32px", textAlign: "left", minWidth: 220, transition: "transform 0.18s ease, background 0.18s ease" }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px) rotate(0.5deg)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}>
-                <div style={{ color: "#fff", fontWeight: 900, fontSize: 18, marginBottom: 6 }}>瀏覽公告欄</div>
-                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>睇下邊行邊業最渴市 →</div>
-              </button>
-            </div>
-
-            {homeStats.total > 0 && (
-              <div style={{ marginTop: 36, display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 30, padding: "8px 18px", maxWidth: "fit-content" }}>
-                <span style={{ fontSize: 16 }}>🔥</span>
-                <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12.5 }}>
-                  全場已有 <b style={{ color: "#fff" }}>{homeStats.total}</b> 則需求在等緣分
-                  {homeStats.hotCategory && <> · 最缺人脈的行業：<b style={{ color: "#e8c547" }}>{homeStats.hotCategory}</b></>}
-                </span>
+            {homeTotal !== null && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(200,16,46,0.12)", border: "1px solid rgba(200,16,46,0.3)", borderRadius: 20, padding: "6px 16px" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#c8102e", animation: "pulse 2s infinite" }} />
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 600 }}>即時更新 · {homeTotal} 則引薦需求</span>
               </div>
             )}
           </div>
-          <div style={{ padding: "0 40px 8px" }}>
-            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, letterSpacing: 1 }}>十個行業，一條心 ——</span>
-          </div>
-          <div style={{ padding: "0 40px 32px", display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: CATEGORY_COLORS[k] }} />
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>{k}. {v}</span>
+
+          {/* Main content */}
+          <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, alignItems: "center", padding: "0 48px", maxWidth: 1300, margin: "0 auto", width: "100%" }}>
+
+            {/* Left: Hero text */}
+            <div style={{ paddingRight: 60 }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(200,16,46,0.12)", border: "1px solid rgba(200,16,46,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 28 }}>
+                <span style={{ color: "#c8102e", fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase" }}>Member Referral Platform</span>
               </div>
-            ))}
+              <h1 style={{ color: "#fff", fontWeight: 900, fontSize: "clamp(52px, 7vw, 88px)", lineHeight: 0.95, letterSpacing: -2, margin: "0 0 16px" }}>
+                NEX<span style={{ color: "#c8102e" }}>US</span>
+              </h1>
+              <div style={{ color: "rgba(255,255,255,0.4)", fontWeight: 300, fontSize: 22, letterSpacing: 10, marginBottom: 24 }}>引薦平台</div>
+              <div style={{ width: 48, height: 3, background: "linear-gradient(90deg, #c8102e, rgba(200,16,46,0.3))", marginBottom: 28, borderRadius: 2 }} />
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, lineHeight: 1.9, marginBottom: 40, maxWidth: 380 }}>
+                互助引薦，共創商機。<br />
+                BNI Nexus 會友專用引薦登記及查閱系統，<br />
+                讓合適的人找到合適的你。
+              </p>
+
+              {/* Buttons */}
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                <button className="home-btn" onClick={() => { setSubmitted(false); setView("form"); }}
+                  style={{ background: "#c8102e", border: "none", borderRadius: 12, padding: "18px 30px", textAlign: "left", boxShadow: "0 8px 24px rgba(200,16,46,0.35)" }}>
+                  <div style={{ color: "#fff", fontWeight: 900, fontSize: 16, marginBottom: 4 }}>登記引薦需求</div>
+                  <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>填寫您需要的引薦 →</div>
+                </button>
+                <button className="home-btn" onClick={() => setView("board")}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "18px 30px", textAlign: "left" }}>
+                  <div style={{ color: "#fff", fontWeight: 900, fontSize: 16, marginBottom: 4 }}>瀏覽公告欄</div>
+                  <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>查看所有引薦需求 →</div>
+                </button>
+              </div>
+
+              {/* Stats row */}
+              <div style={{ display: "flex", gap: 28, marginTop: 44, paddingTop: 28, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                {[
+                  { num: "47", label: "位活躍會友" },
+                  { num: "10", label: "大行業類別" },
+                  { num: homeTotal !== null ? String(homeTotal) : "—", label: "則引薦需求" },
+                ].map(s => (
+                  <div key={s.label}>
+                    <div style={{ color: "#fff", fontWeight: 900, fontSize: 26, lineHeight: 1 }}>{s.num}</div>
+                    <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 4, letterSpacing: 0.5 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Industry category grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, padding: "40px 0" }}>
+              {Object.entries(CATEGORY_LABELS).map(([k, v]) => {
+                const members = MEMBERS.filter(m => m.category === k);
+                return (
+                  <div key={k} className="cat-card"
+                    style={{ background: `${CATEGORY_COLORS[k]}18`, border: `1px solid ${CATEGORY_COLORS[k]}35`, borderRadius: 14, padding: "16px 14px", textAlign: "center" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: CATEGORY_COLORS[k], display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontWeight: 900, color: "#fff", fontSize: 14 }}>{k}</div>
+                    <div style={{ color: "#fff", fontWeight: 700, fontSize: 11, marginBottom: 4, lineHeight: 1.3 }}>{v}</div>
+                    <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>{members.length} 位</div>
+                  </div>
+                );
+              })}
+              {/* Extra "Join Us" card */}
+              <div className="cat-card" onClick={() => { setSubmitted(false); setView("form"); }}
+                style={{ background: "rgba(200,16,46,0.12)", border: "1.5px dashed rgba(200,16,46,0.4)", borderRadius: 14, padding: "16px 14px", textAlign: "center", cursor: "pointer" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(200,16,46,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 18 }}>＋</div>
+                <div style={{ color: "#c8102e", fontWeight: 700, fontSize: 11, lineHeight: 1.3 }}>登記引薦</div>
+                <div style={{ color: "rgba(200,16,46,0.5)", fontSize: 10 }}>立即開始</div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Footer bar */}
+          <div style={{ padding: "16px 48px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>BNI Nexus Chapter · 十大行業聯盟</span>
+            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>互助引薦 · 共創商機</span>
           </div>
         </div>
       </div>

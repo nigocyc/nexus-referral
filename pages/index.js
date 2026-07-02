@@ -394,39 +394,57 @@ export default function Home() {
   return (
     <>
       <Head><title>引薦公告欄 | BNI Nexus</title></Head>
+      <style>{`
+        .board-nav { display: flex; align-items: center; justify-content: space-between; height: auto; padding: 12px 16px; flex-wrap: wrap; gap: 10px; max-width: 1200px; margin: 0 auto; }
+        .board-nav-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .board-nav-right { display: flex; gap: 8px; flex-wrap: wrap; }
+        .board-stats { max-width: 1200px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 16px; overflow-x: auto; align-items: center; }
+        .board-stat { text-align: center; flex-shrink: 0; min-width: 48px; }
+        .board-stat-num { font-weight: 900; font-size: 18px; line-height: 1; }
+        .board-stat-label { font-size: 10px; margin-top: 3px; white-space: nowrap; color: rgba(255,255,255,0.4); }
+        .board-title { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; }
+        @media (max-width: 480px) {
+          .board-title { font-size: 13px; }
+          .board-nav-right button { padding: 7px 10px !important; font-size: 12px !important; }
+        }
+      `}</style>
       <div style={{ minHeight: "100vh", background: "#f4f6fa" }}>
-        <div style={{ background: "#0a0a0a", padding: "0 24px" }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 62, flexWrap: "wrap", gap: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <button onClick={() => setView("home")} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "#fff", borderRadius: 7, padding: "6px 14px", fontSize: 13 }}>← 返回</button>
-              <div style={{ background: "#c8102e", borderRadius: 5, padding: "2px 8px", color: "#fff", fontWeight: 900, fontSize: 12, letterSpacing: 1 }}>BNI</div>
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>NEXUS · 引薦需求公告欄</span>
-              <span style={{ background: "rgba(200,16,46,0.25)", color: "#ff6b7a", borderRadius: 20, padding: "2px 12px", fontSize: 12, fontWeight: 700 }}>{filtered.length} 則</span>
+
+        {/* Top nav bar */}
+        <div style={{ background: "#0a0a0a" }}>
+          <div className="board-nav">
+            <div className="board-nav-left">
+              <button onClick={() => setView("home")} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "#fff", borderRadius: 7, padding: "7px 12px", fontSize: 13, whiteSpace: "nowrap" }}>← 返回</button>
+              <div style={{ background: "#c8102e", borderRadius: 5, padding: "2px 7px", color: "#fff", fontWeight: 900, fontSize: 12, letterSpacing: 1, flexShrink: 0 }}>BNI</div>
+              <span className="board-title">NEXUS · 引薦公告欄</span>
+              <span style={{ background: "rgba(200,16,46,0.25)", color: "#ff6b7a", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{filtered.length} 則</span>
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => fetchReferrals()} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "8px 14px", color: "#fff", fontSize: 13 }}>↺ 刷新</button>
-              <button onClick={() => { setSubmitted(false); setView("form"); }} style={{ background: "#c8102e", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 700, color: "#fff", fontSize: 13 }}>+ 登記需求</button>
-              <button onClick={handleExport} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "8px 18px", color: "#fff", fontSize: 13, fontWeight: 600 }}>⬇ 匯出 Excel</button>
+            <div className="board-nav-right">
+              <button onClick={() => fetchReferrals()} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "7px 12px", color: "#fff", fontSize: 13 }}>↺ 刷新</button>
+              <button onClick={() => { setSubmitted(false); setView("form"); }} style={{ background: "#c8102e", border: "none", borderRadius: 8, padding: "7px 14px", fontWeight: 700, color: "#fff", fontSize: 13 }}>+ 登記</button>
+              <button onClick={handleExport} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "7px 12px", color: "#fff", fontSize: 13, fontWeight: 600 }}>⬇ Excel</button>
             </div>
           </div>
         </div>
 
+        {/* Stats bar */}
         <div style={{ background: "#1a1a1a", borderBottom: "1px solid #2a2a2a" }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "12px 24px", display: "flex", gap: 28, overflowX: "auto" }}>
-            <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{ color: "#c8102e", fontWeight: 900, fontSize: 22 }}>{referrals.length}</div>
-              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2 }}>總需求</div>
+          <div className="board-stats">
+            <div className="board-stat">
+              <div className="board-stat-num" style={{ color: "#c8102e" }}>{referrals.length}</div>
+              <div className="board-stat-label">總需求</div>
             </div>
             {hotCategories.length > 0 && (
-              <div style={{ textAlign: "center", flexShrink: 0 }}>
-                <div style={{ color: "#ffb454", fontWeight: 900, fontSize: 22 }}>🔥 {hotCategories.length}</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2, whiteSpace: "nowrap" }}>熱門共同目標</div>
+              <div className="board-stat">
+                <div className="board-stat-num" style={{ color: "#ffb454" }}>🔥{hotCategories.length}</div>
+                <div className="board-stat-label">熱門目標</div>
               </div>
             )}
+            <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
             {REFERRAL_TYPES.slice(0, 5).map(t => (
-              <div key={t} style={{ textAlign: "center", flexShrink: 0 }}>
-                <div style={{ color: "#fff", fontWeight: 800, fontSize: 18 }}>{referrals.filter(r => r.referralType === t).length}</div>
-                <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, marginTop: 2, whiteSpace: "nowrap" }}>{t.replace("尋找", "")}</div>
+              <div key={t} className="board-stat">
+                <div className="board-stat-num" style={{ color: "#fff" }}>{referrals.filter(r => r.referralType === t).length}</div>
+                <div className="board-stat-label">{t.replace("尋找", "").replace(" / ", "/")}</div>
               </div>
             ))}
           </div>

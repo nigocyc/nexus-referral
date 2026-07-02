@@ -5,12 +5,37 @@ import {
 } from "../lib/data";
 
 export default function Home() {
-  const [view, setView] = useState("home");
+  const [view, setViewState] = useState("home");
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  // Wrap setView to also push browser history
+  function setView(newView) {
+    setViewState(newView);
+    if (newView === "home") {
+      window.history.pushState({ view: "home" }, "", "/");
+    } else if (newView === "form") {
+      window.history.pushState({ view: "form" }, "", "/form");
+    } else if (newView === "board") {
+      window.history.pushState({ view: "board" }, "", "/board");
+    }
+  }
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    function onPop(e) {
+      const v = e.state?.view || "home";
+      setViewState(v);
+      if (v === "board") fetchReferrals();
+    }
+    window.addEventListener("popstate", onPop);
+    // Set initial history state
+    window.history.replaceState({ view: "home" }, "", "/");
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const [form, setForm] = useState({
     memberName: "", referralType: "", targetCategory: "", description: "",
@@ -124,11 +149,27 @@ export default function Home() {
         <style>{`
           @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
           @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
-          @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
           .home-btn { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
           .home-btn:hover { transform: translateY(-4px) !important; }
           .cat-card { transition: transform 0.2s ease, background 0.2s ease !important; cursor: default; }
           .cat-card:hover { transform: scale(1.06) !important; }
+          .home-main { display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 0 48px; }
+          .home-left { padding-right: 60px; }
+          .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 40px 0; }
+          .home-nav { padding: 22px 48px; }
+          .home-footer { padding: 16px 48px; }
+          .home-stats { display: flex; gap: 28px; margin-top: 44px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.07); }
+          @media (max-width: 768px) {
+            .home-main { grid-template-columns: 1fr; padding: 0 24px; gap: 0; }
+            .home-left { padding-right: 0; padding-bottom: 8px; }
+            .home-nav { padding: 16px 20px; flex-wrap: wrap; gap: 10px; }
+            .home-footer { padding: 12px 20px; }
+            .cat-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px 0 24px; }
+            .home-stats { gap: 20px; margin-top: 28px; padding-top: 20px; }
+          }
+          @media (max-width: 480px) {
+            .cat-grid { grid-template-columns: repeat(3, 1fr); }
+          }
         `}</style>
       </Head>
       <div style={{ minHeight: "100vh", background: "#080808", position: "relative", overflow: "hidden", fontFamily: "'Noto Sans TC','PingFang TC',sans-serif" }}>
@@ -143,7 +184,7 @@ export default function Home() {
         <div style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
 
           {/* Nav */}
-          <div style={{ padding: "22px 48px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="home-nav" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ width: 40, height: 40, background: "#c8102e", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 14, letterSpacing: 0.5 }}>BNI</div>
               <div>
@@ -152,7 +193,8 @@ export default function Home() {
               </div>
             </div>
             {homeTotal !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(200,16,46,0.12)", border: "1px solid rgba(200,16,46,0.3)", borderRadius: 20, padding: "6px 16px" }}>
+              <div onClick={() => setView("board")}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(200,16,46,0.12)", border: "1px solid rgba(200,16,46,0.3)", borderRadius: 20, padding: "6px 16px", cursor: "pointer" }}>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#c8102e", animation: "pulse 2s infinite" }} />
                 <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 600 }}>即時更新 · {homeTotal} 則引薦需求</span>
               </div>
@@ -160,10 +202,10 @@ export default function Home() {
           </div>
 
           {/* Main content */}
-          <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, alignItems: "center", padding: "0 48px", maxWidth: 1300, margin: "0 auto", width: "100%" }}>
+          <div className="home-main" style={{ flex: 1, gap: 0, maxWidth: 1300, margin: "0 auto", width: "100%" }}>
 
             {/* Left: Hero text */}
-            <div style={{ paddingRight: 60 }}>
+            <div className="home-left">
               <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(200,16,46,0.12)", border: "1px solid rgba(200,16,46,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 28 }}>
                 <span style={{ color: "#c8102e", fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase" }}>Member Referral Platform</span>
               </div>
@@ -193,7 +235,7 @@ export default function Home() {
               </div>
 
               {/* Stats row */}
-              <div style={{ display: "flex", gap: 28, marginTop: 44, paddingTop: 28, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+              <div className="home-stats">
                 {[
                   { num: "47", label: "位活躍會友" },
                   { num: "10", label: "大行業類別" },
@@ -208,7 +250,7 @@ export default function Home() {
             </div>
 
             {/* Right: Industry category grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, padding: "40px 0" }}>
+            <div className="cat-grid">
               {Object.entries(CATEGORY_LABELS).map(([k, v]) => {
                 const members = MEMBERS.filter(m => m.category === k);
                 return (
@@ -232,7 +274,7 @@ export default function Home() {
           </div>
 
           {/* Footer bar */}
-          <div style={{ padding: "16px 48px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="home-footer" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>BNI Nexus Chapter · 十大行業聯盟</span>
             <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>互助引薦 · 共創商機</span>
           </div>
